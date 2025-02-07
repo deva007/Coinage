@@ -20,6 +20,4 @@
 
 ![img.png](img.png)
 
-## screen recording
-* Size more that 30 mb
-![img_2.png](img_2.png)
+
