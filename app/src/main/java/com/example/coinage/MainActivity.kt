@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -98,20 +99,22 @@ fun AssetsScreen(viewModel: CoinageViewModel) {
 @Composable
 fun AssetItem(asset: CoinageAsset) {
     Card(
+        colors = CardColors(Color.White, Color.Black, Color.White, Color.Gray),
         modifier = Modifier
-            .background(color = Color.Green.copy(alpha = 0.11f))
+            .background(color = Color.White.copy(alpha = 0.11f))
             .fillMaxWidth()
             .padding(8.dp)
     ) {
         Column(
             modifier = Modifier
+                .fillMaxWidth()
                 .background(color = Color.Green.copy(alpha = 0.17f))
                 .padding(16.dp)
         ) {
             Text(text = asset.name, style = MaterialTheme.typography.headlineSmall)
             Text(text = asset.symbol, style = MaterialTheme.typography.bodyMedium)
             val formattedPrice = String.format("%.2f", asset.priceUsd.toDoubleOrNull() ?: 0.0)
-            Text(text = formattedPrice, style = MaterialTheme.typography.bodyLarge)
+            Text(text = formattedPrice, style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
         }
     }
 }
