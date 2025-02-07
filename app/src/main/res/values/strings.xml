@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Coinage</string>
+    <string name="calculate_perplexity">P</string>
+    <string name="invalid_input_probabilities_must_be_between_0_and_1">Invalid input. Probabilities must be between 0 and 1.</string>
+    <string name="enter_probabilities_comma_separated">Enter probabilities (comma-separated)</string>
+    <string name="probability">Probability</string>
+    <string name="live_prices">Live Prices</string>
 </resources>

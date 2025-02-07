@@ -1,4 +1,4 @@
-package com.example.coinage.ui.theme.vm
+package com.example.coinage.ui.vm
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -23,173 +23,101 @@ class CoinageViewModel @Inject constructor(private val repository: CoinageReposi
     ViewModel() {
 
     private val _assets = MutableStateFlow<List<CoinageAsset>>(emptyList())
-
     val assets: StateFlow<List<CoinageAsset>> = _assets.asStateFlow() // Expose as StateFlow
 
-
-    init {
-
-        loadAssets()
-
-        connectWebSocket(CoinageWebSocketListener())
-
-
-    }
-
-
-    private fun loadAssets() {
-
-        viewModelScope.launch {
-
-            _assets.value = repository.getAssets()
-
-        }
-
-    }
-
-
-// WebSocket logic (No changes needed)
-
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
     private var webSocket: WebSocket? = null
 
+    init {
+        loadAssets()
+        connectWebSocket(CoinageWebSocketListener())
+    }
 
-    fun connectWebSocket(listener: CoinageWebSocketListener) {
+    private fun loadAssets() {
+        viewModelScope.launch {
+            _assets.value = repository.getAssets()
+        }
+    }
 
+
+    private fun connectWebSocket(listener: CoinageWebSocketListener) {
         webSocket = repository.openWebSocket(listener)
-
     }
 
-
-    fun disconnectWebSocket() {
-
-        webSocket?.close(1000, "Normal Closure")
-
-        webSocket = null
-
+    fun clearErrorMessage() {
+        _errorMessage.value = null
     }
-
 
     inner class CoinageWebSocketListener : WebSocketListener() {
-
         override fun onMessage(webSocket: WebSocket, text: String) {
-
             Log.d("WebSocket", "Message: $text")
-
             try {
-
                 val json = JSONObject(text)
-
-
-
                 if (json.has("error")) {
-
                     val errorMessage = json.getString("error")
-
                     Log.e("WebSocket", "API Error: $errorMessage")
-
-                } else { // Handle price updates (no "data" array)
-
+                } else {
                     val keys = json.keys()
-
                     while (keys.hasNext()) {
-
-                        val key = keys.next() // This is the asset ID
-
-                        if (key != "type") { // Ignore the "type" field
-
+                        val key = keys.next()
+                        if (key != "type") {
                             val price = json.getString(key)
-
-
-
                             viewModelScope.launch {
-
                                 val currentAssets = _assets.value.toMutableList()
-
                                 val index = currentAssets.indexOfFirst { it.id == key }
-
                                 if (index != -1) {
-
                                     currentAssets[index] =
                                         currentAssets[index].copy(priceUsd = price)
-
                                     _assets.value = currentAssets
-
                                 } else {
-
                                     Log.w(
                                         "WebSocket",
                                         "Asset $key not found in current list. Fetching full list."
                                     )
-
-                                    _assets.value = repository.getAssets() // Refresh the list.
-
+                                    _assets.value = repository.getAssets()
                                 }
-
                             }
-
                         }
-
                     }
-
                 }
 
-
             } catch (e: Exception) {
-
                 Log.e("WebSocket", "JSON parsing error: ${e.message}, Text: $text")
-
             }
 
         }
 
-
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-
             Log.e("WebSocket", "Error: ${t.message}")
-
+            viewModelScope.launch {
+                _errorMessage.value = t.message // Set the error message in the ViewModel
+            }
         }
 
 
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-
             Log.d("WebSocket", "Connection closed: $reason")
-
-            this@CoinageViewModel.webSocket = null // Clear the WebSocket reference
+            this@CoinageViewModel.webSocket = null
 
         }
 
 
-        override fun onOpen(webSocket: WebSocket, response: okhttp3.Response) {
-
+        override fun onOpen(webSocket: WebSocket, response: Response) {
             Log.d("WebSocket", "Connection opened")
 
-
             val subscriptionMessage = """
-
-{
-
-"type": "subscribe",
-
-"subscriptions": [
-
-"global_market",
-
-"assets"
-
-]
-
-}
-
-""".trimIndent()
-
-
-
-            webSocket.send(subscriptionMessage) // Send the subscription message
-
+        {
+          "type": "subscribe",
+          "subscriptions": [
+            "global_market",
+            "assets"
+          ]
         }
+    """.trimIndent()
 
-
-// ... other overrides
+            webSocket.send(subscriptionMessage)
+        }
 
     }
 

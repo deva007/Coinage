@@ -23,7 +23,7 @@ class CoinageRepository @Inject constructor(
                 val assets = response.body()?.data
                 Log.d("CoinageRepository", "${assets?.size}")
                 if (assets != null) {
-                    Log.d("CoinageRepository", "${assets?.size} == 00")
+                    Log.d("CoinageRepository", "${assets.size} == 00")
                     assetDao.insertAll(assets)
                 }
                 assets
